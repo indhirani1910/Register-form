@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register</title>
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: url('BG25.jfif') no-repeat center/cover;
+    height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.container {
+    max-width: 390px;
+    margin-right:540px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 25px;
+    margin-top: 40px;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+}
+
+h2 {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin: 7px 0;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.3);
+    color:#131212;
+    font-size: 15px;
+    font-weight:bold;
+    transition: 0.3s;
+}
+
+input:focus, select:focus{
+    border:2px solid #00eaff;
+    background: rgba(255,255,255,0.6);
+}
+
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+}
+
+.error{
+    border:2px solid red !important;
+}
+
+p#error-text{
+    display:none;
+    color:yellow;
+    margin-top:-5px;
+    margin-bottom:5px;
+}
+
+.btn-box { display: flex; justify-content: space-between; }
+
+button {
+    width: 48%;
+    height: 45px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(45deg, #4facfe, #00f2fe);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#updateBtn { display: none; }
+#clearBtn { background: #ff5f5f; }
+
+.pwd-box{
+    display:flex;
+    width:100%;
+}
+
+#eye-btn {
+    width: 20%;
+    background:#222;
+    color:white;
+    margin-left:5px;
+}
+
+table {
+    width: 90%;
+    margin-top: 20px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    border-collapse: collapse;
+    overflow: hidden;
+}
+
+th, td {
+    color: #121213;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    text-align: center;
+}
+
+th {
+    background: rgba(0, 0, 0, 0.3);
+    font-weight: bold;
+}
+
+.delete-btn, .edit-btn {
+    padding: 5px 10px;
+    border-radius: 8px;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.delete-btn { background: red; }
+.edit-btn { background: green; }
+
+#success{
+    color:rgb(77, 13, 197);
+    text-align:center;
+    font-weight:bold;
+    display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Register Form</h2>
+
+    <input type="text" id="name" placeholder="Name">
+    
+    <input type="email" id="email" placeholder="Email">
+    <p id="error-text">Enter Valid Email !</p>
+
+    <div class="pwd-box">
+        <input type="password" id="password" placeholder="Password (7 digits)" maxlength="7" style="width:80%;">
+        <button type="button" id="eye-btn" onclick="togglePwd()">👁</button>
+    </div>
+
+    <select id="gender">
+        <option value="">Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+    </select>
+
+    <select id="course">
+        <option value="">Select Course</option>
+        <option value="BCA">BCA</option>
+        <option value="BSc CS">BSc CS</option>
+        <option value="BBA">BBA</option>
+        <option value="BSC IT">BSC IT</option>
+        <option value="Other">Other</option>
+    </select>
+
+    <input type="tel" id="phone" maxlength="10" placeholder="Phone Number">
+    <input type="text" id="address" placeholder="Address">
+
+    <div class="btn-box">
+        <button id="registerBtn" onclick="registerUser()">Register</button>
+        <button id="updateBtn" onclick="updateUser()">Update</button>
+        <button id="clearBtn" onclick="clearForm()">Clear</button>
+    </div>
+
+    <p id="success">✔ Registered Successfully!</p>
+
+</div>
+
+<h2 style="color:#1257d6; margin-top:20px;">Registered Users</h2>
+
+<table id="userTable">
+<thead>
+<tr>
+    <th>Name</th>
+    <th>Email</th>
+    <th>Gender</th>
+    <th>Course</th>
+    <th>Phone</th>
+    <th>Address</th>
+    <th>Action</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<script>
+let users = JSON.parse(localStorage.getItem("users")) || [];
+let editIndex = null;
+
+const nameField = document.getElementById("name");
+const emailField = document.getElementById("email");
+const pwdField = document.getElementById("password");
+const genderField = document.getElementById("gender");
+const courseField = document.getElementById("course");
+const phoneField = document.getElementById("phone");
+const addressField = document.getElementById("address");
+const errorText = document.getElementById("error-text");
+
+emailField.addEventListener("blur", validateEmail);
+
+function validateEmail(){
+    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!pattern.test(emailField.value)){
+        emailField.classList.add("error");
+        errorText.style.display = "block";
+        return false;
+    }
+    emailField.classList.remove("error");
+    errorText.style.display = "none";
+    return true;
+}
+
+function togglePwd(){
+    pwdField.type = pwdField.type == "password" ? "text" : "password";
+}
+
+function displayUsers(){
+    const body = document.querySelector("#userTable tbody");
+    body.innerHTML = "";
+    users.forEach((u,i)=>{
+        body.innerHTML += `
+        <tr>
+            <td>${u.name}</td>
+            <td>${u.email}</td>
+            <td>${u.gender}</td>
+            <td>${u.course}</td>
+            <td>${u.phone}</td>
+            <td>${u.address}</td>
+            <td>
+                <button class="edit-btn" onclick="editUser(${i})">Edit</button>
+                <button class="delete-btn" onclick="deleteUser(${i})">Delete</button>
+            </td>
+        </tr>`;
+    });
+}
+
+function registerUser(){
+    const userName = nameField.value.trim();
+    const userEmail = emailField.value.trim();
+    const userPassword = pwdField.value.trim();
+    const userGender = genderField.value;
+    const userCourse = courseField.value;
+    const userPhone = phoneField.value.trim();
+    const userAddress = addressField.value.trim();
+
+    if(!userName || !userEmail || !userGender){ alert("Fill required fields!"); return; }
+    if(!validateEmail()){ return alert("Fix Email Format!"); }
+    if(userPassword.length !== 7){ return alert("Password must be exactly 7 digits!"); }
+    if(!/^\d{7}$/.test(userPassword)){ return alert("Password must be numeric!"); }
+    if(userPhone.length != 10 || isNaN(userPhone)){ return alert("Phone must be 10 digits!"); }
+
+    users.push({
+        name: userName,
+        email: userEmail,
+        password: userPassword,
+        gender: userGender,
+        course: userCourse,
+        phone: userPhone,
+        address: userAddress
+    });
+
+    save();
+    showSuccess();
+}
+function editUser(i){
+    editIndex = i;
+    let u = users[i];
+
+    nameField.value = u.name;
+    emailField.value = u.email;
+    pwdField.value = u.password;
+    genderField.value = u.gender;
+    courseField.value = u.course;
+    phoneField.value = u.phone;
+    addressField.value = u.address;
+
+    registerBtn.style.display = "none";
+    updateBtn.style.display = "inline-block";
+}
+
+function updateUser(){
+    const userName = nameField.value.trim();
+    const userEmail = emailField.value.trim();
+    const userPassword = pwdField.value.trim();
+    const userGender = genderField.value;
+    const userCourse = courseField.value;
+    const userPhone = phoneField.value.trim();
+    const userAddress = addressField.value.trim();
+
+    if(!userName || !userEmail || !userGender){ alert("Fill required fields!"); return; }
+    if(!validateEmail()){ return alert("Fix Email Format!"); }
+    if(userPassword.length !== 7){ return alert("Password must be exactly 7 digits!"); }
+    if(!/^\d{7}$/.test(userPassword)){ return alert("Password must be numeric!"); }
+    if(userPhone.length != 10 || isNaN(userPhone)){ return alert("Phone must be 10 digits!"); }
+
+    users[editIndex] = {
+        name: userName,
+        email: userEmail,
+        password: userPassword,
+        gender: userGender,
+        course: userCourse,
+        phone: userPhone,
+        address: userAddress
+    };
+
+    save();
+    registerBtn.style.display = "inline-block";
+    updateBtn.style.display = "none";
+    showSuccess("updated");
+}
+
+function deleteUser(i){
+    if(confirm("Delete this user?")){
+        users.splice(i,1);
+        save();
+    }
+}
+
+function save(){
+    localStorage.setItem("users", JSON.stringify(users));
+    displayUsers();
+    clearForm();
+}
+
+function clearForm(){
+    nameField.value = "";
+    emailField.value = "";
+    pwdField.value = "";
+    genderField.value = "";
+    courseField.value = "";
+    phoneField.value = "";
+    addressField.value = "";
+}
+
+function showSuccess(type="register"){
+    let s = document.getElementById("success");
+    if(type==="updated"){
+        s.innerText = "✔ Updated Successfully!";
+        s.style.color="yellow"
+    }else{
+        s.innerText="✔ Registered Successfully!";
+        s.style.color="lime";
+    }
+    s.style.display = "block";
+    setTimeout(()=>{s.style.display="none";},2000);
+}
+
+displayUsers();
+</script>
+
+</body>
+</html>
